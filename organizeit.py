@@ -3,6 +3,8 @@
 # 2023/07/27 v1.0.0 first version
 # 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
 # 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
+# 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
+# 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
 # 
 
 import os
@@ -17,6 +19,8 @@ import exiftool
 parser = argparse.ArgumentParser()
 parser.add_argument('--src_dir', required=True, help='Path to the source directory')
 parser.add_argument('--dst_dir', required=True, help='Path to the destination directory')
+parser.add_argument('--skip-filename-with-exif', default=False, action='store_true',
+                    help='Skip files containing "exif" in the filename if set to True')
 args = parser.parse_args()
 
 # Extract source and destination directories from the parsed arguments
@@ -40,13 +44,23 @@ ignored_files = 0
 
 # Function to recursively remove empty directories
 def remove_empty_dirs(dir):
-    for dirpath, dirnames, filenames in os.walk(dir, topdown=False):
-        if dirpath != dir and not any(dirnames) and not any(filenames):
-            try:
-                os.rmdir(dirpath)
-                print(f"{datetime.now().replace(microsecond=0)} - Removed empty directory: {dirpath}")
-            except Exception as e:
-                print(f"Error removing directory {dirpath}: {e}")
+    while True:
+        # Initialize flag to False on each iteration
+        dir_removed = False
+        for dirpath, dirnames, filenames in os.walk(dir, topdown=False):
+            # Check if the current directory is not the source directory and is empty
+            if dirpath != dir and not any(dirnames) and not any(filenames):
+                try:
+                    os.rmdir(dirpath)
+                    print(f"{datetime.now().replace(microsecond=0)} - Removed empty directory: {dirpath}")
+                    # Set flag to True if a directory has been removed
+                    dir_removed = True
+                except Exception as e:
+                    print(f"Error removing directory {dirpath}: {e}")
+        
+        # If no directories were removed in this iteration, break the loop
+        if not dir_removed:
+            break
 
 #function to get datetime from exif metadata
 def get_exif_datetime(image_path):
@@ -83,8 +97,25 @@ while True:
             # Get the full path of the file
             file = os.path.join(dirpath, filename)
 
+            # Check if the file already exists in the IGNORED subfolder
+            ignored_file_path = os.path.join(ignored_dir, filename)
+            if os.path.isfile(ignored_file_path):
+                try:
+                    # Move it to IGNORED and continue with the next file
+                    shutil.move(file, ignored_file_path)
+                    ignored_files += 1
+                    print(f"{datetime.now().replace(microsecond=0)} - Ignored: Moved {filename} to IGNORED.")
+                    continue
+                except Exception as e:
+                    print(f"Error moving file {file} to {ignored_file_path}: {e}")
+
             # Check if the path is a file
             if os.path.isfile(file):
+                # If --ignore-filename-with-exif is set to True and 'exif' is in the filename, skip this file
+                if args.skip_filename_with_exif and 'exif' in filename.lower():
+                    print(f"{datetime.now().replace(microsecond=0)} - Skipping file with 'exif' in filename: {filename}")
+                    continue
+
                 # Attempt to extract datetime from EXIF data
                 dt_obj = get_exif_datetime(file)
 
