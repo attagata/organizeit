@@ -1,7 +1,9 @@
 # Anderson Tagata
 # Organize it (Python 3)
-# 2023/07/29 v1.1.0
-# added exif read feature
+# 2023/07/27 v1.0.0 first version
+# 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
+# 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
+# 
 
 import os
 import shutil
@@ -39,7 +41,7 @@ ignored_files = 0
 # Function to recursively remove empty directories
 def remove_empty_dirs(dir):
     for dirpath, dirnames, filenames in os.walk(dir, topdown=False):
-        if not os.listdir(dirpath):
+        if dirpath != dir and not any(dirnames) and not any(filenames):
             try:
                 os.rmdir(dirpath)
                 print(f"{datetime.now().replace(microsecond=0)} - Removed empty directory: {dirpath}")
@@ -59,6 +61,20 @@ def get_exif_datetime(image_path):
             return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S')
     return None
 
+def get_exif_datetime_quicktime(image_path):
+    if not os.path.exists(image_path):
+        print("Error: File not found.")
+        return None 
+    with exiftool.ExifTool() as et:
+        tags = et.execute_json('-QuickTime:CreationDate', image_path) 
+    if tags and len(tags) > 0:
+        datetime_str = tags[0].get('QuickTime:CreationDate')
+        if datetime_str:
+            # Append ':00' to the timezone offset to make it in the format '+03:00'
+            datetime_str += ':00'
+            return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S%z')
+    return None
+
 while True:
     # Walk through the source directory recursively
     for dirpath, dirnames, filenames in os.walk(src_dir):
@@ -71,7 +87,10 @@ while True:
             if os.path.isfile(file):
                 # Attempt to extract datetime from EXIF data
                 dt_obj = get_exif_datetime(file)
-                
+
+                if dt_obj is None:
+                    dt_obj = get_exif_datetime_quicktime(file)
+
                 # If no EXIF data or unable to extract datetime, use file's modification time
                 if dt_obj is None:
                     timestamp = os.path.getmtime(file)
