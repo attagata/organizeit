@@ -1,6 +1,7 @@
 # Anderson Tagata
 # Organize it (Python 3)
-# 2023/07/27
+# 2023/07/29 v1.1.0
+# added exif read feature
 
 import os
 import shutil
@@ -8,6 +9,7 @@ import filecmp
 import time
 from datetime import datetime
 import argparse
+import exiftool
 
 # Create the parser and add arguments
 parser = argparse.ArgumentParser()
@@ -44,6 +46,19 @@ def remove_empty_dirs(dir):
             except Exception as e:
                 print(f"Error removing directory {dirpath}: {e}")
 
+#function to get datetime from exif metadata
+def get_exif_datetime(image_path):
+    if not os.path.exists(image_path):
+        print("Error: File not found.")
+        return None 
+    with exiftool.ExifTool() as et:
+        tags = et.execute_json('-EXIF:DateTimeOriginal', image_path) 
+    if tags and len(tags) > 0:
+        datetime_str = tags[0].get('EXIF:DateTimeOriginal')
+        if datetime_str:  # Check if datetime_str is not None
+            return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S')
+    return None
+
 while True:
     # Walk through the source directory recursively
     for dirpath, dirnames, filenames in os.walk(src_dir):
@@ -54,9 +69,17 @@ while True:
 
             # Check if the path is a file
             if os.path.isfile(file):
-                # Get the modification time and convert it to a datetime object
-                timestamp = os.path.getmtime(file)
-                dt_obj = datetime.fromtimestamp(timestamp)
+                # Attempt to extract datetime from EXIF data
+                dt_obj = get_exif_datetime(file)
+                
+                # If no EXIF data or unable to extract datetime, use file's modification time
+                if dt_obj is None:
+                    timestamp = os.path.getmtime(file)
+                    dt_obj = datetime.fromtimestamp(timestamp)
+                    sExif = ""
+                else:
+                    #Mark file with exif case date came from exif metatag
+                    sExif = "_exif"
 
                 # Format the datetime object to 'yyyymmdd' string
                 year_month_day = dt_obj.strftime('%Y%m%d')
@@ -80,7 +103,7 @@ while True:
                 new_filename_without_seq = f"{year_month_day}_{time_format}"
 
                 # Construct the full new filename without the sequence number
-                new_filename = f"{new_filename_without_seq}.{extension.lower()}"
+                new_filename = f"{new_filename_without_seq}{sExif}.{extension.lower()}"
                 # Construct the new file path
                 new_file_path = os.path.join(new_dir, new_filename)
 
