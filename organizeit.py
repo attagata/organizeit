@@ -5,7 +5,8 @@
 # 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
 # 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
 # 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
-# 
+# 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
+# 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
 
 import os
 import shutil
@@ -21,6 +22,8 @@ parser.add_argument('--src_dir', required=True, help='Path to the source directo
 parser.add_argument('--dst_dir', required=True, help='Path to the destination directory')
 parser.add_argument('--skip-filename-with-exif', default=False, action='store_true',
                     help='Skip files containing "exif" in the filename if set to True')
+parser.add_argument('--delete-temp-files', default=False, action='store_true',
+                    help='Delete temporary files (e.g., .DS_Store, Thumbs.db) if set to True')
 args = parser.parse_args()
 
 # Extract source and destination directories from the parsed arguments
@@ -42,6 +45,60 @@ sequence_dict = {}
 moved_files = 0
 ignored_files = 0
 
+# Function to get datetime from exif metadata
+def get_exif_datetime(image_path):
+    if not os.path.exists(image_path):
+        print("Error: File not found.")
+        return None
+
+    # Use exiftool to get EXIF metadata from the image file
+    with exiftool.ExifTool() as et:
+        tags = et.execute_json('-EXIF:DateTimeOriginal', image_path)
+
+    if tags and len(tags) > 0:
+        # Extract the 'DateTimeOriginal' tag value from the EXIF metadata
+        datetime_str = tags[0].get('EXIF:DateTimeOriginal')
+
+        # Check if the datetime_str is not empty and not equal to '0000:00:00 00:00:00'
+        if datetime_str and datetime_str.strip() and datetime_str != '0000:00:00 00:00:00':
+            try:
+                # Parse the datetime string to a datetime object
+                return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S')
+            except ValueError:
+                # If there is an error parsing the datetime, print an error message and return None
+                print(f"Error parsing EXIF datetime for file {image_path}.")
+                return None
+
+    return None
+
+# Function to get datetime from QuickTime metadata
+def get_exif_datetime_quicktime(image_path):
+    if not os.path.exists(image_path):
+        print("Error: File not found.")
+        return None
+
+    # Use exiftool to get QuickTime metadata from the image file
+    with exiftool.ExifTool() as et:
+        tags = et.execute_json('-QuickTime:CreationDate', image_path)
+
+    if tags and len(tags) > 0:
+        # Extract the 'CreationDate' tag value from the QuickTime metadata
+        datetime_str = tags[0].get('QuickTime:CreationDate')
+
+        # Check if the datetime_str is not empty and not equal to '0000:00:00 00:00:00'
+        if datetime_str and datetime_str.strip() and datetime_str != '0000:00:00 00:00:00':
+            try:
+                # Append ':00' to the timezone offset to make it in the format '+03:00'
+                datetime_str += ':00'
+                # Parse the datetime string to a datetime object with timezone information
+                return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S%z')
+            except ValueError:
+                # If there is an error parsing the datetime, print an error message and return None
+                print(f"Error parsing QuickTime datetime for file {image_path}.")
+                return None
+
+    return None
+
 # Function to recursively remove empty directories
 def remove_empty_dirs(dir):
     while True:
@@ -62,38 +119,21 @@ def remove_empty_dirs(dir):
         if not dir_removed:
             break
 
-#function to get datetime from exif metadata
-def get_exif_datetime(image_path):
-    if not os.path.exists(image_path):
-        print("Error: File not found.")
-        return None 
-    with exiftool.ExifTool() as et:
-        tags = et.execute_json('-EXIF:DateTimeOriginal', image_path) 
-    if tags and len(tags) > 0:
-        datetime_str = tags[0].get('EXIF:DateTimeOriginal')
-        if datetime_str:  # Check if datetime_str is not None
-            return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S')
-    return None
-
-def get_exif_datetime_quicktime(image_path):
-    if not os.path.exists(image_path):
-        print("Error: File not found.")
-        return None 
-    with exiftool.ExifTool() as et:
-        tags = et.execute_json('-QuickTime:CreationDate', image_path) 
-    if tags and len(tags) > 0:
-        datetime_str = tags[0].get('QuickTime:CreationDate')
-        if datetime_str:
-            # Append ':00' to the timezone offset to make it in the format '+03:00'
-            datetime_str += ':00'
-            return datetime.strptime(datetime_str, '%Y:%m:%d %H:%M:%S%z')
-    return None
-
 while True:
     # Walk through the source directory recursively
     for dirpath, dirnames, filenames in os.walk(src_dir):
         # Iterate through each file in the current directory
         for filename in filenames:
+            # Skip files with filenames ".DS_Store" or "Thumbs.db" if the --delete-temp-files argument is provided
+            if args.delete_temp_files and (filename.lower == ".ds_store" or filename.lower() == "thumbs.db"):
+                try:
+                    # Remove the file and continue with the next file
+                    os.remove(os.path.join(dirpath, filename))
+                    print(f"{datetime.now().replace(microsecond=0)} - Removed temporary file: {filename}")
+                except Exception as e:
+                    print(f"Error removing temporary file {filename}: {e}")
+                continue
+
             # Get the full path of the file
             file = os.path.join(dirpath, filename)
 
@@ -128,7 +168,7 @@ while True:
                     dt_obj = datetime.fromtimestamp(timestamp)
                     sExif = ""
                 else:
-                    #Mark file with exif case date came from exif metatag
+                    # Mark file with exif case date came from exif metatag
                     sExif = "_exif"
 
                 # Format the datetime object to 'yyyymmdd' string
@@ -197,3 +237,4 @@ while True:
 
     # Wait for 5 minutes before the next iteration
     time.sleep(300)
+
