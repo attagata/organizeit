@@ -125,7 +125,7 @@ while True:
         # Iterate through each file in the current directory
         for filename in filenames:
             # Skip files with filenames ".DS_Store" or "Thumbs.db" if the --delete-temp-files argument is provided
-            if args.delete_temp_files and (filename.lower == ".ds_store" or filename.lower() == "thumbs.db"):
+            if args.delete_temp_files and (filename.lower() == ".ds_store" or filename.lower() == "thumbs.db"):
                 try:
                     # Remove the file and continue with the next file
                     os.remove(os.path.join(dirpath, filename))
