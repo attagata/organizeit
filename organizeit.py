@@ -205,8 +205,11 @@ while True:
                     # If the contents of the files are the same, move it to the ignored directory
                     try:
                         if filecmp.cmp(file, new_file_path, shallow=True):
-                            print(f"{datetime.now().replace(microsecond=0)} - Ignoring duplicate file: {filename}")
-                            shutil.move(file, os.path.join(ignored_dir, filename))
+                            if args.delete_source:
+                                shutil.move(file, os.path.join(ignored_dir, filename))
+                                print(f"{datetime.now().replace(microsecond=0)} - Moving duplicated file to IGNORED folder: {filename}")
+                            else:
+                                print(f"{datetime.now().replace(microsecond=0)} - Just skipping duplicated file: {filename}")
                             ignored_files += 1
                             continue
                     except Exception as e:
@@ -223,11 +226,12 @@ while True:
 
                 # Calculate file size in MB
                 file_size_MB = os.path.getsize(file) / (1024 * 1024) # in Megabytes
-                print(f"{datetime.now().replace(microsecond=0)} - Moving: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
+                
 
                 # Move the file to the new directory using shutil.move or shutil.copy
                 if args.delete_source:
                     try:
+                        print(f"{datetime.now().replace(microsecond=0)} - Moving: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
                         shutil.move(file, new_file_path)
                     except Exception as e:
                         print(f"Error moving file {file} to {new_file_path}: {e}")
@@ -235,6 +239,7 @@ while True:
                         moved_files += 1
                 else:
                     try:
+                        print(f"{datetime.now().replace(microsecond=0)} - Copying: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
                         shutil.copy(file, new_file_path)
                     except Exception as e:
                         print(f"Error copying file {file} to {new_file_path}: {e}")
