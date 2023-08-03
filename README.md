@@ -1,35 +1,55 @@
-# organizeit
-Helps you to reorganize files from a source folder by renaming and reallocate them in to folder organized structure based on date-time. Python.
-Command need 2 parameters:
-I suggest you to test with dummies files before to put it on real work time.
+# Organize It (Python 3)
 
-Usage:
-python3 organizeit.py --src_dir /Volumes/NTFS05TB/SOURCE --dst_dir /Volumes/NTFS05TB/DESTINATION
+**Author:** Anderson Tagata  
+**Version:** 1.3.1  
+**Release Date:** 2023/08/01
 
-'--src_dir' = 'Path to the source directory'
+## Overview
 
-'--dst_dir' = 'Path to the destination directory'
+**Organize It** is a Python 3 script designed to help you organize files in a source directory based on their EXIF or QuickTime metadata date. The script moves files to a destination directory, creating a folder structure based on the date and file extension. It also provides options to skip files with certain filenames, delete temporary files, and handle files with the same name by appending a sequence number.
 
-It will move the files showing the source and destination and file size.
+## Features
 
-In case the file already exists on destination, it will move it to IGNORE subfolder of DESTINATION.
+- Extracts creation dates from EXIF or QuickTime metadata in image files.
+- Organizes files into a destination directory based on the date and file extension.
+- Skips files with certain filenames (e.g., containing "exif") using the `--skip-filename-with-exif` option.
+- Deletes temporary files (e.g., .DS_Store, Thumbs.db) using the `--delete-temp-files` option.
+- Handles files with the same name by appending a sequence number.
 
-It will run and wait for 5 minutes to run it again, to force stop it, user CTRL+C.
+## Requirements
 
-Here is the table of features:
+- Python 3
+- `exiftool` library for extracting metadata from image files. Install it using the following command:
+pip install exiftool
 
-The script takes two arguments from the command line, --src_dir and --dst_dir, which are the source and destination directories for file management.
 
-It creates an IGNORED directory under the destination directory. This directory seems to be used for storing duplicate files.
+## Usage
 
-The script then enters a while True loop, essentially running indefinitely until manually stopped. Within this loop, it recursively traverses through all files in the source directory.
+1. Clone the repository or download the `organize_it.py` script.
 
-For each file in the source directory, it gets the modification time and constructs a new directory path in the destination directory based on the file's extension and modification date.
+2. Open a terminal or command prompt and navigate to the directory containing the `organize_it.py` script.
 
-If a file with the same name already exists at the destination path, it checks if the contents of the two files are identical. If they are, it moves the file from the source directory to the IGNORED directory.
+3. Run the script with the following arguments:
 
-If the files are not identical, it adds a sequence number to the filename to avoid a naming collision and then moves the file to the new directory.
+python organize_it.py --src_dir SOURCE_DIRECTORY --dst_dir DESTINATION_DIRECTORY [--skip-filename-with-exif] [--delete-temp-files]
 
-The script keeps a count of how many files it has moved and how many it has ignored (due to being duplicates).
+**Arguments:**
+- `--src_dir`: Path to the source directory. (Required)
+- `--dst_dir`: Path to the destination directory. (Required)
+- `--skip-filename-with-exif`: Optional. If set to True, the script skips files containing "exif" in the filename.
+- `--delete-temp-files`: Optional. If set to True, the script deletes temporary files (e.g., .DS_Store, Thumbs.db).
 
-Finally, it removes any empty directories in the source directory and prints out the total number of moved and ignored files before pausing for 5 minutes (300 seconds). After the pause, the loop starts again.
+4. The script will continuously run in an infinite loop, reorganizing files in the source directory every 5 minutes.
+
+## Example
+
+python organize_it.py --src_dir /path/to/source --dst_dir /path/to/destination --skip-filename-with-exif --delete-temp-files
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+Special thanks to the `exiftool` library creators for providing a powerful tool to extract metadata from image files.
