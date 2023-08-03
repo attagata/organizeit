@@ -1,8 +1,8 @@
 # Organize It (Python 3)
 
 **Author:** Anderson Tagata  
-**Version:** 1.3.1  
-**Release Date:** 2023/08/01
+**Version:** 1.3.2
+**Release Date:** 2023/08/03
 
 ## Overview
 
@@ -14,6 +14,7 @@
 - Organizes files into a destination directory based on the date and file extension.
 - Skips files with certain filenames (e.g., containing "exif") using the `--skip-filename-with-exif` option.
 - Deletes temporary files (e.g., .DS_Store, Thumbs.db) using the `--delete-temp-files` option.
+- Forces to remove the source files using the `--delete-source` option.
 - Handles files with the same name by appending a sequence number.
 
 ## Requirements
@@ -38,12 +39,13 @@ python organize_it.py --src_dir SOURCE_DIRECTORY --dst_dir DESTINATION_DIRECTORY
 - `--dst_dir`: Path to the destination directory. (Required)
 - `--skip-filename-with-exif`: Optional. If set to True, the script skips files containing "exif" in the filename.
 - `--delete-temp-files`: Optional. If set to True, the script deletes temporary files (e.g., .DS_Store, Thumbs.db).
+- `--delete-source`: Optional. If set to True, the source file will be moved to the destination directory.
 
 4. The script will continuously run in an infinite loop, reorganizing files in the source directory every 5 minutes.
 
 ## Example
 
-python organize_it.py --src_dir /path/to/source --dst_dir /path/to/destination --skip-filename-with-exif --delete-temp-files
+python organize_it.py --src_dir /path/to/source --dst_dir /path/to/destination --skip-filename-with-exif --delete-temp-files --delete-source
 
 
 ## License

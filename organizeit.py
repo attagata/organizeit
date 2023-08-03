@@ -7,6 +7,7 @@
 # 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
 # 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
 # 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
+# 2023/08/03 v1.3.2 new arg --delete-source to force delete origin files
 
 import os
 import shutil
@@ -24,6 +25,8 @@ parser.add_argument('--skip-filename-with-exif', default=False, action='store_tr
                     help='Skip files containing "exif" in the filename if set to True')
 parser.add_argument('--delete-temp-files', default=False, action='store_true',
                     help='Delete temporary files (e.g., .DS_Store, Thumbs.db) if set to True')
+parser.add_argument('--delete-source', default=False, action='store_true',
+                    help='Delete the source file after moving it to the destination directory.')
 args = parser.parse_args()
 
 # Extract source and destination directories from the parsed arguments
@@ -202,8 +205,11 @@ while True:
                     # If the contents of the files are the same, move it to the ignored directory
                     try:
                         if filecmp.cmp(file, new_file_path, shallow=True):
-                            print(f"{datetime.now().replace(microsecond=0)} - Ignoring duplicate file: {filename}")
-                            shutil.move(file, os.path.join(ignored_dir, filename))
+                            if args.delete_source:
+                                shutil.move(file, os.path.join(ignored_dir, filename))
+                                print(f"{datetime.now().replace(microsecond=0)} - Moving duplicated file to IGNORED folder: {filename}")
+                            else:
+                                print(f"{datetime.now().replace(microsecond=0)} - Just skipping duplicated file: {filename}")
                             ignored_files += 1
                             continue
                     except Exception as e:
@@ -220,14 +226,25 @@ while True:
 
                 # Calculate file size in MB
                 file_size_MB = os.path.getsize(file) / (1024 * 1024) # in Megabytes
-                print(f"{datetime.now().replace(microsecond=0)} - Moving: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
+                
 
-                # Move the file to the new directory
-                try:
-                    shutil.move(file, new_file_path)
-                    moved_files += 1
-                except Exception as e:
-                    print(f"Error moving file {file} to {new_file_path}: {e}")
+                # Move the file to the new directory using shutil.move or shutil.copy
+                if args.delete_source:
+                    try:
+                        print(f"{datetime.now().replace(microsecond=0)} - Moving: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
+                        shutil.move(file, new_file_path)
+                    except Exception as e:
+                        print(f"Error moving file {file} to {new_file_path}: {e}")
+                    else:
+                        moved_files += 1
+                else:
+                    try:
+                        print(f"{datetime.now().replace(microsecond=0)} - Copying: {filename} >> {new_file_path} - {file_size_MB:.2f} MB")
+                        shutil.copy(file, new_file_path)
+                    except Exception as e:
+                        print(f"Error copying file {file} to {new_file_path}: {e}")
+                    else:
+                        moved_files += 1
 
     # Remove empty directories
     remove_empty_dirs(src_dir)
@@ -237,4 +254,3 @@ while True:
 
     # Wait for 5 minutes before the next iteration
     time.sleep(300)
-
