@@ -1,13 +1,18 @@
-# Anderson Tagata
-# Organize it (Python 3)
-# 2023/07/27 v1.0.0 first version
-# 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
-# 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
-# 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
-# 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
-# 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
-# 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
-# 2023/08/03 v1.3.2 new arg --delete-source to force delete origin files
+-# Anderson Tagata
+-# Organize it (Python 3)
+-# 2023/07/27 v1.0.0 first version
+-# 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
+-# 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
+-# 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
+-# 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
+-# 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
+-# 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
+-# 2023/08/03 v1.3.2 new arg --delete-source to force delete origin files
+-# 2023/08/03 v1.3.3 new arg --dont_keep_running_at_end (force to get out of 5 minutes loop)
+-# 2023/08/03 v1.3.3 new arg --append_to_filename Allows to pass a name of album to be append to the filename
+-# 2023/08/03 v1.3.3 new helper batch-organizeit.py allows to run organizeit separated with diff main folders
+-#  USAGE: python3 batch-organizeit.py /Volumes/XYZ/Albums --dont_keep_running_at_end --skip-filename-with-exif --delete-temp-files --delete-source
+
 
 import os
 import shutil
@@ -27,6 +32,11 @@ parser.add_argument('--delete-temp-files', default=False, action='store_true',
                     help='Delete temporary files (e.g., .DS_Store, Thumbs.db) if set to True')
 parser.add_argument('--delete-source', default=False, action='store_true',
                     help='Delete the source file after moving it to the destination directory.')
+parser.add_argument('--dont_keep_running_at_end', default=False, action='store_true',
+                    help='Stop run when reaches the end.')
+parser.add_argument('--append_to_filename', dest='text_append', default='',
+                    help='Text to append to the filename of the destination.')
+
 args = parser.parse_args()
 
 # Extract source and destination directories from the parsed arguments
@@ -195,6 +205,9 @@ while True:
                 # Construct the new filename without the sequence number
                 new_filename_without_seq = f"{year_month_day}_{time_format}"
 
+                # Append the value of TEXT_APPEND to the new_filename
+                new_filename_without_seq += args.text_append
+
                 # Construct the full new filename without the sequence number
                 new_filename = f"{new_filename_without_seq}{sExif}.{extension.lower()}"
                 # Construct the new file path
@@ -214,7 +227,7 @@ while True:
                             continue
                     except Exception as e:
                         print(f"Error comparing or moving file {file} to {ignored_dir}: {e}")
-                        
+
                     else:  # If the contents differ, increment the sequence and rename
                         if new_filename_without_seq in sequence_dict:
                             sequence = sequence_dict[new_filename_without_seq]
@@ -226,7 +239,6 @@ while True:
 
                 # Calculate file size in MB
                 file_size_MB = os.path.getsize(file) / (1024 * 1024) # in Megabytes
-                
 
                 # Move the file to the new directory using shutil.move or shutil.copy
                 if args.delete_source:
@@ -251,6 +263,9 @@ while True:
 
     print(f"{datetime.now().replace(microsecond=0)} - Total moved files: {moved_files}")
     print(f"{datetime.now().replace(microsecond=0)} - Total ignored files: {ignored_files}")
+
+    if args.dont_keep_running_at_end:
+        exit(0)
 
     # Wait for 5 minutes before the next iteration
     time.sleep(300)
