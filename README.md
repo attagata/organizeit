@@ -1,7 +1,7 @@
 # Organize It (Python 3)
 
 **Author:** Anderson Tagata  
-**Version:** 1.3.2
+**Version:** 1.3.3
 **Release Date:** 2023/08/03
 
 ## Overview
@@ -46,6 +46,13 @@ python organize_it.py --src_dir SOURCE_DIRECTORY --dst_dir DESTINATION_DIRECTORY
 ## Example
 
 python organize_it.py --src_dir /path/to/source --dst_dir /path/to/destination --skip-filename-with-exif --delete-temp-files --delete-source
+
+
+5. Batch Helper
+
+2023/08/03 v1.0.0 new helper batch-organizeit.py allows to run organizeit separated with diff main folders
+
+USAGE: python3 batch-organizeit.py /Volumes/XYZ/Albums [--dont_keep_running_at_end] [--skip-filename-with-exif] [--delete-temp-files] [--delete-source]
 
 
 ## License
