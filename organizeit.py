@@ -1,17 +1,17 @@
--# Anderson Tagata
--# Organize it (Python 3)
--# 2023/07/27 v1.0.0 first version
--# 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
--# 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
--# 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
--# 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
--# 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
--# 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
--# 2023/08/03 v1.3.2 new arg --delete-source to force delete origin files
--# 2023/08/03 v1.3.3 new arg --dont_keep_running_at_end (force to get out of 5 minutes loop)
--# 2023/08/03 v1.3.3 new arg --append_to_filename Allows to pass a name of album to be append to the filename
--# 2023/08/03 v1.3.3 new helper batch-organizeit.py allows to run organizeit separated with diff main folders
--#  USAGE: python3 batch-organizeit.py /Volumes/XYZ/Albums --dont_keep_running_at_end --skip-filename-with-exif --delete-temp-files --delete-source
+# Anderson Tagata
+# Organize it (Python 3)
+# 2023/07/27 v1.0.0 first version
+# 2023/07/28 v1.1.0 added exif read feature for EXIF:DateTimeOriginal
+# 2023/07/29 v1.2.0 added exif read feature for QuickTime:CreationDate
+# 2023/07/29 v1.3.0 added Skip Argument for files already named with exif
+# 2023/07/29 v1.3.0 Remove only subfolders when is empty and keep the source folder
+# 2023/08/01 v1.3.1 Files with error to get date, send them to ERROR subfolder
+# 2023/08/01 v1.3.1 new arg --delete-temp-files to force delete of ocurrences .DS_Store or Thumbs.db
+# 2023/08/03 v1.3.2 new arg --delete-source to force delete origin files
+# 2023/08/03 v1.3.3 new arg --dont_keep_running_at_end (force to get out of 5 minutes loop)
+# 2023/08/03 v1.3.3 new arg --append_to_filename Allows to pass a name of album to be append to the filename
+# 2023/08/03 v1.3.3 new helper batch-organizeit.py allows to run organizeit separated with diff main folders
+#  USAGE: python3 batch-organizeit.py /Volumes/XYZ/Albums --dont_keep_running_at_end --skip-filename-with-exif --delete-temp-files --delete-source
 
 
 import os
